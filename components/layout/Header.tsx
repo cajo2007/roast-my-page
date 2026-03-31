@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Show, SignInButton, UserButton } from "@clerk/nextjs";
 
 export function Header() {
   return (
@@ -19,7 +20,26 @@ export function Header() {
           >
             Pricing
           </Link>
-          {/* TODO: Add auth nav items (Sign in / Dashboard) when auth is implemented */}
+          <Show when="signed-out">
+            <SignInButton mode="modal">
+              <button className="px-3 py-1.5 text-sm text-zinc-400 hover:text-zinc-100 transition-colors rounded-md hover:bg-zinc-900">
+                Sign in
+              </button>
+            </SignInButton>
+          </Show>
+
+          <Show when="signed-in">
+            <div className="ml-1 flex items-center">
+              <UserButton
+                appearance={{
+                  elements: {
+                    avatarBox: "w-7 h-7",
+                  },
+                }}
+              />
+            </div>
+          </Show>
+
           <Link
             href="/roast"
             className="ml-2 px-4 py-1.5 text-sm font-medium bg-amber-500 hover:bg-amber-400 text-zinc-950 rounded-md transition-colors"
