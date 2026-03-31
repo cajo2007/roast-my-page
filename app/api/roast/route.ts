@@ -1,7 +1,6 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { prisma } from "@/lib/prisma";
 import { generatePublicSlug } from "@/lib/utils";
 import { generateRoast, transformToRoastResult } from "@/lib/llm/generate-roast";
 
@@ -90,8 +89,6 @@ export async function POST(req: NextRequest) {
     //   { id: roast.id, publicSlug: roast.publicSlug, result: roastResult },
     //   { status: 201 }
     // );
-
-    void prisma; // suppress until DB is wired
 
     // Return both the routing slug and the full result so the client can
     // render immediately without a second round-trip to fetch by slug.
