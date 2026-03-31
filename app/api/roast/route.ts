@@ -1,8 +1,11 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { auth, clerkClient } from "@clerk/nextjs/server";
 import { generatePublicSlug } from "@/lib/utils";
 import { generateRoast, transformToRoastResult } from "@/lib/llm/generate-roast";
+
+const NEW_USER_CREDITS = 3;
 
 const roastRequestSchema = z.object({
   inputType: z.enum(["URL", "PASTE"]),
@@ -24,15 +27,9 @@ export async function POST(req: NextRequest) {
 
     const { inputType, input, brutalMode } = parsed.data;
 
-    // Resolve the content to analyze.
-    // For URL input, the client should have already called /api/extract and
-    // passed the extracted content. If it comes through as a raw URL, fall back
-    // gracefully with a clear error rather than silently sending a bare URL to the LLM.
     const content = input.trim();
 
     if (inputType === "URL" && content.startsWith("http")) {
-      // URL extraction is not yet implemented — client should send extracted text.
-      // TODO: Once /api/extract is implemented, call it here server-side instead.
       return NextResponse.json(
         {
           error:
@@ -52,8 +49,26 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // TODO: Check credit balance before generating (after auth + billing are wired)
-    // If user has no credits and has already used their free roast, return 402
+    // Credit check for signed-in users
+    const { userId } = await auth();
+    let currentCredits: number | null = null;
+    let clerk: Awaited<ReturnType<typeof clerkClient>> | null = null;
+
+    if (userId) {
+      clerk = await clerkClient();
+      const clerkUser = await clerk.users.getUser(userId);
+      currentCredits =
+        typeof clerkUser.publicMetadata.credits === "number"
+          ? clerkUser.publicMetadata.credits
+          : NEW_USER_CREDITS;
+
+      if (currentCredits <= 0) {
+        return NextResponse.json(
+          { error: "You're out of credits." },
+          { status: 402 }
+        );
+      }
+    }
 
     // Generate the roast via LLM
     let llmOutput;
@@ -70,28 +85,16 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Transform LLM output to UI-ready RoastResult
+    // Decrement credits after successful generation
+    if (userId && clerk !== null && currentCredits !== null) {
+      await clerk.users.updateUser(userId, {
+        publicMetadata: { credits: currentCredits - 1 },
+      });
+    }
+
     const roastResult = transformToRoastResult(llmOutput);
     const publicSlug = generatePublicSlug();
 
-    // TODO: Uncomment when DATABASE_URL is configured and `prisma db push` has been run
-    // const roast = await prisma.roast.create({
-    //   data: {
-    //     inputType,
-    //     originalInput: input,
-    //     brutalMode,
-    //     resultJson: llmOutput as object, // store raw LLM output
-    //     publicSlug,
-    //     // userId: session?.user?.id ?? null,
-    //   },
-    // });
-    // return NextResponse.json(
-    //   { id: roast.id, publicSlug: roast.publicSlug, result: roastResult },
-    //   { status: 201 }
-    // );
-
-    // Return both the routing slug and the full result so the client can
-    // render immediately without a second round-trip to fetch by slug.
     return NextResponse.json(
       { id: publicSlug, publicSlug, result: roastResult },
       { status: 201 }

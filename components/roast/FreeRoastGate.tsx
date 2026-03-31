@@ -15,39 +15,21 @@ export function FreeRoastGate() {
     try {
       setUsed(localStorage.getItem(FREE_ROAST_KEY) === "1");
     } catch {
-      // localStorage blocked (private browsing, etc.) — allow form to show
       setUsed(false);
     }
   }, []);
 
-  // Avoid flash: render nothing until localStorage and Clerk are both ready
-  if (used === null || !isLoaded) return null;
+  if (!isLoaded) return null;
+
+  // Signed-in users bypass the localStorage gate — credits are managed server-side
+  if (isSignedIn) {
+    return <RoastForm />;
+  }
+
+  // Signed-out path: enforce the one-free-roast localStorage gate
+  if (used === null) return null;
 
   if (used) {
-    if (isSignedIn) {
-      return (
-        <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-8 flex flex-col gap-6">
-          <div>
-            <p className="text-xs uppercase tracking-widest text-amber-500 font-semibold mb-3">
-              Free roast used
-            </p>
-            <h2 className="text-xl font-semibold text-zinc-100 mb-2">
-              You're signed in.
-            </h2>
-            <p className="text-zinc-400 text-sm leading-relaxed">
-              Credits and payments are the next step.
-            </p>
-          </div>
-
-          <div className="flex flex-col sm:flex-row gap-3">
-            <Button variant="primary" size="md" disabled>
-              Buy credits — coming soon
-            </Button>
-          </div>
-        </div>
-      );
-    }
-
     return (
       <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-8 flex flex-col gap-6">
         <div>

@@ -2,6 +2,7 @@
 
 import { useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import { useUser } from "@clerk/nextjs";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 import type { InputType } from "@/lib/types";
@@ -16,6 +17,7 @@ type RoastFormProps = {
 
 export function RoastForm({ onSuccess }: RoastFormProps = {}) {
   const router = useRouter();
+  const { user, isSignedIn } = useUser();
 
   const [tab, setTab] = useState<TabType>("URL");
   const [url, setUrl] = useState("");
@@ -26,6 +28,12 @@ export function RoastForm({ onSuccess }: RoastFormProps = {}) {
 
   const input = tab === "URL" ? url : pastedCopy;
   const hasInput = input.trim().length > 0;
+
+  const credits = isSignedIn
+    ? typeof user?.publicMetadata?.credits === "number"
+      ? user.publicMetadata.credits
+      : 3
+    : null;
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -68,8 +76,6 @@ export function RoastForm({ onSuccess }: RoastFormProps = {}) {
       }
 
       const data = await res.json();
-      // Cache result in sessionStorage so the result page renders without a DB round-trip.
-      // Once DB persistence is wired, the result page will fall back to a DB fetch.
       if (data.result) {
         sessionStorage.setItem(`roast:${data.publicSlug}`, JSON.stringify(data.result));
       }
@@ -78,6 +84,8 @@ export function RoastForm({ onSuccess }: RoastFormProps = {}) {
       } catch {
         // localStorage may be blocked in some browsers
       }
+      // Refresh Clerk user so credit count updates immediately on return
+      await user?.reload();
       onSuccess?.();
       router.push(`/roast/${data.publicSlug}`);
     } catch (err) {
@@ -201,10 +209,15 @@ export function RoastForm({ onSuccess }: RoastFormProps = {}) {
         {loading ? "Roasting…" : brutalMode ? "Roast me (brutally) →" : "Roast my page →"}
       </Button>
 
-      <p className="text-xs text-zinc-600">
-        Your first roast is free. No account required.
-        {/* TODO: show credit balance here when auth + billing are live */}
-      </p>
+      {isSignedIn ? (
+        <p className="text-xs text-zinc-500">
+          {credits === 1 ? "1 credit remaining" : `${credits} credits remaining`}
+        </p>
+      ) : (
+        <p className="text-xs text-zinc-600">
+          Your first roast is free. No account required.
+        </p>
+      )}
     </form>
   );
 }
