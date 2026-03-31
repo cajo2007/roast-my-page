@@ -1,0 +1,109 @@
+// Prisma schema for Roast My Landing Page
+// Run: npx prisma generate && npx prisma db push
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ------------------------------------------------------------
+// User — auth-ready stub; fully implement when adding auth
+// TODO: add NextAuth or Clerk adapter fields here
+// ------------------------------------------------------------
+model User {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  email     String  @unique
+  name      String?
+  avatarUrl String?
+
+  // Relations
+  roasts        Roast[]
+  creditBalance CreditBalance?
+
+  @@map("users")
+}
+
+// ------------------------------------------------------------
+// Roast — core model; stores input, extracted content, and result
+// ------------------------------------------------------------
+model Roast {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // What the user submitted
+  inputType        InputType
+  originalInput    String    @db.Text // URL or raw pasted copy
+  extractedContent String?   @db.Text // Content pulled from URL (populated by /api/extract)
+
+  // Options
+  brutalMode Boolean @default(false)
+
+  // LLM result — stored as structured JSON
+  // Schema matches the RoastResult type in lib/types.ts
+  resultJson Json?
+
+  // Public sharing
+  publicSlug String  @unique
+  isPublic   Boolean @default(true)
+
+  // Auth-ready: nullable until auth is implemented
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([publicSlug])
+  @@index([userId])
+  @@map("roasts")
+}
+
+// ------------------------------------------------------------
+// CreditBalance — one row per user; used for credit pack billing
+// TODO: implement when adding Stripe credit packs
+// ------------------------------------------------------------
+model CreditBalance {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId  String @unique
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  credits Int    @default(0)
+
+  // Relations
+  ledger CreditLedgerEntry[]
+
+  @@map("credit_balances")
+}
+
+// ------------------------------------------------------------
+// CreditLedgerEntry — immutable audit log of credit changes
+// TODO: populate from Stripe webhook when adding billing
+// ------------------------------------------------------------
+model CreditLedgerEntry {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  balanceId String
+  balance   CreditBalance @relation(fields: [balanceId], references: [id], onDelete: Cascade)
+
+  amount      Int    // Positive = credit added, negative = credit spent
+  description String // e.g. "Purchased 10-credit pack", "Roast generated"
+
+  // Optional: link to a Stripe payment intent
+  stripePaymentIntentId String?
+
+  @@index([balanceId])
+  @@map("credit_ledger_entries")
+}
+
+enum InputType {
+  URL
+  PASTE
+}
