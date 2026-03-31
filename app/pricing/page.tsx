@@ -4,36 +4,28 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Pricing",
   description:
-    "One free roast to start. Pay-as-you-go credit packs for more — coming soon.",
+    "One free roast to start. Pay-as-you-go credit packs for more — no subscriptions.",
 };
 
 // TODO: Replace with Stripe product/price data fetched at build time
 // when implementing credit pack billing
 
-const FUTURE_PACKS = [
+const CREDIT_PACKS = [
   {
-    name: "Starter Pack",
+    name: "Starter",
     credits: 3,
-    price: 9,
-    perCredit: 3,
+    price: 3,
+    perCredit: 1,
     description: "For founders testing copy ideas.",
     highlight: false,
   },
   {
-    name: "Growth Pack",
+    name: "Value Pack",
     credits: 10,
-    price: 25,
-    perCredit: 2.5,
+    price: 7,
+    perCredit: 0.7,
     description: "For teams iterating fast on landing pages.",
     highlight: true,
-  },
-  {
-    name: "Agency Pack",
-    credits: 30,
-    price: 60,
-    perCredit: 2,
-    description: "For agencies roasting client pages at scale.",
-    highlight: false,
   },
 ];
 
@@ -78,8 +70,8 @@ export default function PricingPage() {
       </div>
 
       {/* Credit packs — coming soon */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-12">
-        {FUTURE_PACKS.map((pack) => (
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-12 max-w-2xl mx-auto">
+        {CREDIT_PACKS.map((pack) => (
           <div
             key={pack.name}
             className={`relative p-6 rounded-xl border flex flex-col gap-4 ${
@@ -103,13 +95,13 @@ export default function PricingPage() {
 
             <div>
               <span className="text-3xl font-bold text-zinc-100">
-                ${pack.price}
+                £{pack.price}
               </span>
               <span className="text-zinc-500 text-sm ml-1">
                 for {pack.credits} credits
               </span>
               <p className="text-zinc-600 text-xs mt-1">
-                ${pack.perCredit} per roast
+                £{pack.perCredit} per roast
               </p>
             </div>
 
