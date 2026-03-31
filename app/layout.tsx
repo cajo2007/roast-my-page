@@ -12,11 +12,15 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: {
-    default: "Roast My Landing Page",
-    template: "%s | Roast My Landing Page",
+    default: "Roast Your Page",
+    template: "%s | Roast Your Page",
   },
   description:
     "Get a sharp, specific, actionable critique of your landing page. Built for SaaS founders who want real feedback, not compliments.",
+  metadataBase: new URL("https://roastyourpage.com"),
+  alternates: {
+    canonical: "https://roastyourpage.com",
+  },
   keywords: [
     "landing page review",
     "conversion rate optimization",
@@ -25,15 +29,16 @@ export const metadata: Metadata = {
     "startup landing page",
   ],
   openGraph: {
-    title: "Roast My Landing Page",
+    title: "Roast Your Page",
     description:
       "Stop guessing why your landing page isn't converting. Get a brutally honest, actionable roast.",
     type: "website",
+    url: "https://roastyourpage.com",
     // TODO: Add OG image — generate dynamic share cards for roast results
   },
   twitter: {
     card: "summary_large_image",
-    title: "Roast My Landing Page",
+    title: "Roast Your Page",
     description:
       "Sharp, specific, actionable landing page audits for SaaS founders.",
   },

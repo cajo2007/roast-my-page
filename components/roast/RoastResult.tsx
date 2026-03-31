@@ -114,7 +114,7 @@ function formatRoastAsText(result: RoastResultType): string {
     `TOP PRIORITIES`,
     result.finalVerdict.topPriorities.map((p, i) => `${i + 1}. ${p}`).join("\n"),
     ``,
-    `Get your own roast at roastmypage.com`,
+    `Get your own roast at roastyourpage.com`,
   ];
 
   return lines.join("\n");
