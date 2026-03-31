@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { RoastForm } from "@/components/roast/RoastForm";
+import { FreeRoastGate } from "@/components/roast/FreeRoastGate";
 
 export const metadata: Metadata = {
   title: "Roast My Page",
@@ -21,7 +21,7 @@ export default function RoastPage() {
         </p>
       </div>
 
-      <RoastForm />
+      <FreeRoastGate />
     </div>
   );
 }

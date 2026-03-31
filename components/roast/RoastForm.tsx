@@ -6,9 +6,15 @@ import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 import type { InputType } from "@/lib/types";
 
+const FREE_ROAST_KEY = "rmp_free_used";
+
 type TabType = InputType;
 
-export function RoastForm() {
+type RoastFormProps = {
+  onSuccess?: () => void;
+};
+
+export function RoastForm({ onSuccess }: RoastFormProps = {}) {
   const router = useRouter();
 
   const [tab, setTab] = useState<TabType>("URL");
@@ -67,6 +73,12 @@ export function RoastForm() {
       if (data.result) {
         sessionStorage.setItem(`roast:${data.publicSlug}`, JSON.stringify(data.result));
       }
+      try {
+        localStorage.setItem(FREE_ROAST_KEY, "1");
+      } catch {
+        // localStorage may be blocked in some browsers
+      }
+      onSuccess?.();
       router.push(`/roast/${data.publicSlug}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
