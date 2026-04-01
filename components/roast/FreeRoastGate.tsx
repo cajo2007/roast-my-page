@@ -10,6 +10,8 @@ const FREE_ROAST_KEY = "rmp_free_used";
 
 export function FreeRoastGate() {
   const [used, setUsed] = useState<boolean | null>(null);
+  const [purchaseLoading, setPurchaseLoading] = useState<string | null>(null);
+  const [purchaseError, setPurchaseError] = useState<string | null>(null);
   const { user, isSignedIn, isLoaded } = useUser();
 
   useEffect(() => {
@@ -19,6 +21,24 @@ export function FreeRoastGate() {
       setUsed(false);
     }
   }, []);
+
+  async function handlePurchase(pack: "starter" | "value") {
+    setPurchaseLoading(pack);
+    setPurchaseError(null);
+    try {
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pack }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Something went wrong.");
+      window.location.href = data.url;
+    } catch (err) {
+      setPurchaseError(err instanceof Error ? err.message : "Something went wrong.");
+      setPurchaseLoading(null);
+    }
+  }
 
   if (!isLoaded) return null;
 
@@ -40,18 +60,35 @@ export function FreeRoastGate() {
               You're out of credits.
             </h2>
             <p className="text-zinc-400 text-sm leading-relaxed">
-              Pick up a credit pack to keep roasting. No subscription — buy what you need.
+              Pick up a credit pack to keep roasting. No subscription — buy what
+              you need.
             </p>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3">
-            <Button variant="primary" size="md" disabled>
-              3 credits — £3 (coming soon)
+            <Button
+              variant="secondary"
+              size="md"
+              loading={purchaseLoading === "starter"}
+              disabled={!!purchaseLoading}
+              onClick={() => handlePurchase("starter")}
+            >
+              3 credits — £3
             </Button>
-            <Button variant="secondary" size="md" disabled>
-              10 credits — £7 (coming soon)
+            <Button
+              variant="primary"
+              size="md"
+              loading={purchaseLoading === "value"}
+              disabled={!!purchaseLoading}
+              onClick={() => handlePurchase("value")}
+            >
+              10 credits — £7
             </Button>
           </div>
+
+          {purchaseError && (
+            <p className="text-sm text-red-400">{purchaseError}</p>
+          )}
 
           <Link
             href="/pricing"

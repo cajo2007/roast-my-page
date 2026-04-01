@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { FreeRoastGate } from "@/components/roast/FreeRoastGate";
+import { PurchaseSuccessBanner } from "@/components/roast/PurchaseSuccessBanner";
 
 export const metadata: Metadata = {
   title: "Roast My Page",
@@ -7,7 +8,14 @@ export const metadata: Metadata = {
     "Submit your URL or paste your copy and get a sharp, specific, actionable roast.",
 };
 
-export default function RoastPage() {
+export default async function RoastPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ success?: string }>;
+}) {
+  const params = await searchParams;
+  const purchaseSuccess = params.success === "true";
+
   return (
     <div className="px-6 py-16 max-w-2xl mx-auto">
       {/* Header */}
@@ -21,6 +29,7 @@ export default function RoastPage() {
         </p>
       </div>
 
+      <PurchaseSuccessBanner show={purchaseSuccess} />
       <FreeRoastGate />
     </div>
   );
